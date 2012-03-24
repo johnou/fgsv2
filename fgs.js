@@ -1188,7 +1188,7 @@ var FGS = {
 		else
 			var url = 'https://www.facebook.com/ajax/reqs.php?__a=1';
 		
-		var dataPost2 = dataPost + '&post_form_id='+FGS.post_form_id+'&fb_dtsg='+FGS.fb_dtsg+'&nctr[_mod]=pagelet_requests';
+		var dataPost2 = dataPost + '&post_form_id='+FGS.post_form_id+'&fb_dtsg='+FGS.fb_dtsg+'&nctr[_mod]=pagelet_requests'+'&__user='+FGS.userID;
 		
 		if(typeof isCallback != 'undefined')
 		{
@@ -1284,7 +1284,7 @@ var FGS = {
 		
 		dataPost = dataPost.replace('&actions['+x+']='+y, '');
 		
-		var dataPost2 = dataPost + '&post_form_id='+FGS.post_form_id+'&fb_dtsg='+FGS.fb_dtsg+'&nctr[_mod]=pagelet_requests&actions[reject]=&lsd=';
+		var dataPost2 = dataPost + '&post_form_id='+FGS.post_form_id+'&fb_dtsg='+FGS.fb_dtsg+'&nctr[_mod]=pagelet_requests&actions[reject]=&lsd=&__user='+FGS.userID;
 		
 		var obj = {
 			arguments:
