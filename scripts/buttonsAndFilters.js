@@ -863,7 +863,7 @@ FGS.gamesData =
 							'GameOptionsTab'
 						],
 					},
-	166309140062981: { 	
+	/*166309140062981: { 	
 						name: 'Puzzled Hearts',	systemName: 'puzzledhearts', link: 'https://apps.facebook.com/phearts/',
 						filter:	
 						{
@@ -911,7 +911,7 @@ FGS.gamesData =
 						],
 						bonusNotice: "Before you start collecting in this game, you must open one tab with Charmed Gems game. Use <a target=\"_blank\" href=\"https://apps.facebook.com/charmedgems/pages/mygems.php\">this link</a> and keep the tab open while collecting.",
 					},
-					
+	*/
 	167746316127: 	{ 	
 						name: 'Zoo World',		systemName: 'zooworld', link: 'https://apps.facebook.com/playzoo/zoo/home.php',
 						hasSendback: true,

@@ -18,57 +18,6 @@ FGS.database.onSuccess = function(tx, e)
 	//console.log('Koniec' );
 }
 
-FGS.database.createTable = function()
-{
-	FGS.database.db.transaction(function(tx)
-	{
-	
-		tx.executeSql('CREATE TABLE IF NOT EXISTS options (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, option LONGTEXT)', [],  FGS.database.onSuccess, FGS.database.onError);
-
-		tx.executeSql('INSERT OR IGNORE INTO options VALUES(?,?)', [1, '{}'],  FGS.database.onSuccess, FGS.database.onError);
-		
-		tx.executeSql('CREATE TABLE IF NOT EXISTS ' + 
-                  'bonuses (id TEXT PRIMARY KEY ASC, gameID INTEGER, status INTEGER, error TEXT, title TEXT, text TEXT, image TEXT, url TEXT, time INTEGER, feedback TEXT, link_data TEXT, like_bonus INTEGER, comment_bonus INTEGER, resend_gift TEXT, error_text TEXT)', [],  FGS.database.onSuccess, FGS.database.onError);
-		
-		tx.executeSql('CREATE TABLE IF NOT EXISTS ' + 
-                  'neighborStats (userID INTEGER, gameID INTEGER, lastBonus INTEGER,  lastGift INTEGER, totalBonuses INTEGER, totalGifts INTEGER, lastGiftSent INTEGER, totalGiftsSent INTEGER, PRIMARY KEY(userID, gameID))', [],  FGS.database.onSuccess, FGS.database.onError);
-			
-		tx.executeSql('ALTER TABLE neighborStats ADD COLUMN lastGiftSent INTEGER', [],  FGS.database.onSuccess, FGS.database.onError);
-		tx.executeSql('ALTER TABLE neighborStats ADD COLUMN totalGiftsSent INTEGER', [],  FGS.database.onSuccess, FGS.database.onError);
-		
-		tx.executeSql('ALTER TABLE bonuses ADD COLUMN comment_bonus INTEGER', [],  FGS.database.onSuccess, FGS.database.onError);
-		tx.executeSql('ALTER TABLE bonuses ADD COLUMN resend_gift TEXT', [],  FGS.database.onSuccess, FGS.database.onError);
-		tx.executeSql('ALTER TABLE bonuses ADD COLUMN error_text TEXT', [],  FGS.database.onSuccess, FGS.database.onError);
-		
-		tx.executeSql("UPDATE neighborStats SET lastGiftSent = ? where lastGiftSent IS NULL", [0], FGS.database.onSuccess, FGS.database.onError);
-		tx.executeSql("UPDATE neighborStats SET totalGiftsSent = ? where totalGiftsSent IS NULL", [0], FGS.database.onSuccess, FGS.database.onError);
-
-		tx.executeSql('CREATE TABLE IF NOT EXISTS ' + 
-				'requests(id TEXT PRIMARY KEY ASC, gameID INTEGER, status INTEGER, error TEXT, title TEXT, text TEXT, image TEXT, post TEXT, time INTEGER, resend_gift TEXT, error_text TEXT)', [],  FGS.database.onSuccess, FGS.database.onError);
-
-		tx.executeSql('ALTER TABLE requests ADD COLUMN resend_gift TEXT', [],  FGS.database.onSuccess, FGS.database.onError);
-		tx.executeSql('ALTER TABLE requests ADD COLUMN error_text TEXT', [],  FGS.database.onSuccess, FGS.database.onError);
-		
-		tx.executeSql('CREATE TABLE IF NOT EXISTS ' + 
-                  'freegifts(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, gameID INTEGER, friend TEXT, gift TEXT, time INTEGER, is_thank_you INTEGER)', [], FGS.database.onSuccess, FGS.database.onError);
-		
-		tx.executeSql('ALTER TABLE freegifts ADD COLUMN is_thank_you INTEGER', [],  FGS.database.onSuccess, FGS.database.onError);
-		
-		FGS.databaseAlreadyOpen = true;
-		
-		
-		if(FGS.optionsLoaded == false)
-		{
-			FGS.loadOptions(FGS.userID);
-		}
-
-		//tx.executeSql('DELETE FROM freegifts', [], FGS.database.onSuccess, FGS.database.onError);
-		//tx.executeSql('DELETE FROM bonuses', [], FGS.database.onSuccess, FGS.database.onError);
-		//tx.executeSql('DELETE FROM requests', [], FGS.database.onSuccess, FGS.database.onError);
-		//tx.executeSql('DELETE FROM freegifts', [], FGS.database.onSuccess, FGS.database.onError);
-	});
-}
-
 FGS.database.updateStats = function(type, data2)
 {
 	for(var ids in data2)

@@ -60,198 +60,6 @@ FGS.openURI = function (url, background)
 	});
 };
 
-FGS.hideFromFeed = function(bonusID, limit)
-{
-	FGS.database.db.readTransaction(function(tx)
-	{
-		tx.executeSql("SELECT * FROM bonuses where id = ?", [bonusID], function(tx2, res)
-		{
-			var v = res.rows.item(0);
-			
-			if(limit)
-			{
-				if(!FGS.options.games[v.gameID].hideFromFeedLimitError)
-				{	
-					return;
-				}
-			}
-			else
-			{
-				if(!FGS.options.games[v.gameID].hideFromFeed)
-				{	
-					return;
-				}
-			}
-			
-			var tmpObj = JSON.parse(v.feedback);
-			
-			if(typeof tmpObj.target_profile_id == 'undefined')
-				tmpObj.target_profile_id = tmpObj.actor;
-			
-			
-			var postData = { 
-				'action': 'uninteresting',
-				'post_form_id': FGS.post_form_id,
-				'fb_dtsg':	FGS.fb_dtsg,
-				'object_ids[0]': tmpObj.target_profile_id,
-				'object_ids[1]': tmpObj.source_app_id,
-				'story_fbids[0]': tmpObj.target_profile_id+':'+tmpObj.target_fbid,
-				'source': 'home',
-				'nctr[_mod]': 'pagelet_home_stream',
-				'lsd':	'',
-				'post_form_id_source':'AsyncRequest',
-				'lazy': 1,
-				'stale_ok': 1
-			};
-			
-			var postData = FGS.jQuery.param(postData).replace(/%5B/g,'[').replace(/%5D/g,']');
-			
-			var obj = {
-				arguments:
-				{
-					'type': 'POST',
-					'url': 'https://www.facebook.com/ajax/feed/filter_action.php?__a=1',
-					'data': postData
-				},
-				params: []
-			};
-			
-			FGSoperator.postMessage(obj);
-		});
-	});
-};
-
-FGS.commentBonus = function(bonusID, comment)
-{
-	FGS.database.db.transaction(function(tx)
-	{
-		tx.executeSql("SELECT * FROM bonuses where id = ?", [bonusID], function(tx2, res)
-		{
-			var v = res.rows.item(0);
-			var postData = { 
-				'charset_test': FGS.charset_test,
-				'post_form_id': FGS.post_form_id,
-				'fb_dtsg':	FGS.fb_dtsg,
-				'xhp_ufi': 1,
-				'comment': 'Add comment',
-				'feedback_params': v.feedback,
-				'add_comment_text': comment,
-				'link_data': v.link_data,
-				'nctr[_mod]': 'pagelet_home_stream',
-				'lsd':	'',
-				'post_form_id_source':'AsyncRequest',
-				'lazy': 1,
-				'stale_ok': 1
-			};
-
-			var postData = FGS.jQuery.param(postData).replace(/%5B/g,'[').replace(/%5D/g,']');
-			
-			var obj = {
-				arguments:
-				{
-					'type': 'POST',
-					'url': 'https://www.facebook.com/ajax/ufi/modify.php?__a=1',
-					'data': postData
-				},
-				params: [bonusID, 'comment'],
-				callback: 'FGS.commentOrLikeBonus_callback'
-			};
-			
-			FGSoperator.postMessage(obj);
-		});
-	});
-};
-
-FGS.likeBonus = function (bonusID, autolike)
-{
-	FGS.database.db.transaction(function(tx)
-	{
-		tx.executeSql("SELECT * FROM bonuses where id = ?", [bonusID], function(tx2, res)
-		{
-			var v = res.rows.item(0);
-			
-			if(typeof(autolike) != 'undefined')
-			{
-				if(!FGS.options.games[v.gameID].likeBonus)
-				{	
-					return;
-				}
-			}
-			
-			var postData = {
-				'charset_test': FGS.charset_test,
-				'post_form_id': FGS.post_form_id,
-				'fb_dtsg':	FGS.fb_dtsg,
-				'xhp_ufi': 1,
-				'like': '',
-				'feedback_params': v.feedback,
-				'add_comment_text': '',
-				'link_data': v.link_data,
-				'nctr[_mod]': 'pagelet_home_stream',
-				'lsd':	'',
-				'post_form_id_source':'AsyncRequest',
-				'lazy': 1,
-				'stale_ok': 1
-			};
-			
-			var postData = FGS.jQuery.param(postData).replace(/%5B/g,'[').replace(/%5D/g,']');
-			
-			var obj = {
-				arguments:
-				{
-					'type': 'POST',
-					'url': 'https://www.facebook.com/ajax/ufi/modify.php?__a=1',
-					'data': postData
-				},
-				params: [bonusID, 'like'],
-				callback: 'FGS.commentOrLikeBonus_callback'
-			};
-			
-			FGSoperator.postMessage(obj);
-		});
-	});
-};
-
-FGS.sendbackGift = function (bonusID, sendbackData)
-{
-	FGS.database.db.transaction(function(tx)
-	{
-		tx.executeSql("SELECT * FROM requests where id = ?", [bonusID], function(tx2, res)
-		{
-			var v = res.rows.item(0);
-			if(!FGS.options.games[v.gameID].sendbackGift)
-			{	
-				return;
-			}
-			var gameID = v.gameID;	
-			
-			FGS.sendView('changeSendbackState', bonusID);
-			
-			var tempData = sendbackData;
-			
-			if(typeof tempData.destInt == 'undefined' || tempData.destInt == '')
-			{
-				var postData = v.post;
-				tempData.destInt = FGS.Gup('params\\\[from_id\\\]', postData);
-			}
-			
-			var params = {
-				gift: tempData.gift,
-				gameID:	gameID,
-				sendTo: [tempData.destInt],
-				sendToName: tempData.destName,
-				thankYou: true,
-				bonusID: bonusID,	
-				isRequest: true
-			};
-			
-			var game = FGS.gamesData[gameID].systemName;
-			
-			FGS[game].Freegifts.Click(params);			
-		});
-	});
-};
-
 FGS.sendView = function (msg, data, data2, data3)
 {
 	if(msg == 'requestError' || msg == 'requestSuccess' || msg == 'bonusError' || msg == 'bonusSuccess')
@@ -457,6 +265,9 @@ FGS.loadOptions = function (userID)
 					}
 				}
 			}
+			
+			delete FGS.options.games['166309140062981'];
+			delete FGS.options.games['216230855057280'];
 			
 			FGS.optionsLoaded = true;
 			FGS.finishStartup();
@@ -692,7 +503,25 @@ FGS.loadLibraries = function(context)
 	$.ajax({
 		async: false,
 		cache: false,
+		url: chrome.extension.getURL("scripts/database.js"),
+		type: "GET",
+		success: function(){},
+		dataType: 'script'
+	});
+	
+	$.ajax({
+		async: false,
+		cache: false,
 		url: chrome.extension.getURL("scripts/gifts.js"),
+		type: "GET",
+		success: function(d){},
+		dataType: 'script'
+	});	
+	
+	$.ajax({
+		async: false,
+		cache: false,
+		url: chrome.extension.getURL("scripts/squel.js"),
 		type: "GET",
 		success: function(d){},
 		dataType: 'script'

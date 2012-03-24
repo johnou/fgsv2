@@ -63,6 +63,8 @@ var FGS = {
 		"sr_RS": 	{name: "Српски"},
 	},
 	
+	browser: (typeof chrome == 'undefined' ? 'firefox' : 'chrome'),
+	
 	translations: {},
 	
 	formExclusionString: '[action*="zbar-new\\/banner.php"],[action*="www\\.facebook\\.com\\/connect\\/connect.php"],[action*="custom_ads\\/islandAd\\.php"],[action*="www\\.facebook\\.com\\/plugins"]',
@@ -1441,7 +1443,7 @@ var FGS = {
 	{
 		FGS.FBloginError = false;
 		FGS.updateIcon();
-		FGS.xhrInterval = setInterval(FGS.checkXhrQueue,100);
+		FGS.xhrInterval = setInterval("FGS.checkXhrQueue()",100);
 		FGS.restartRequests();
 		FGS.restartBonuses();
 	},
@@ -2799,4 +2801,196 @@ var FGS = {
 			}
 		}
 	}
+};
+
+FGS.hideFromFeed = function(bonusID, limit)
+{
+	FGS.database.query({query: FGS.squel.select().from('bonuses').where('id', bonusID), callback: function(res) {
+			if(res.result.length > 0) {
+				var v = res.result[0];
+				
+				if(limit)
+				{
+					if(!FGS.options.games[v.gameID].hideFromFeedLimitError)
+					{	
+						return;
+					}
+				}
+				else
+				{
+					if(!FGS.options.games[v.gameID].hideFromFeed)
+					{	
+						return;
+					}
+				}
+				
+				var tmpObj = JSON.parse(v.feedback);
+				
+				if(typeof tmpObj.target_profile_id == 'undefined')
+					tmpObj.target_profile_id = tmpObj.actor;
+				
+				
+				var postData = { 
+					'action': 'uninteresting',
+					'post_form_id': FGS.post_form_id,
+					'fb_dtsg':	FGS.fb_dtsg,
+					'object_ids[0]': tmpObj.target_profile_id,
+					'object_ids[1]': tmpObj.source_app_id,
+					'story_fbids[0]': tmpObj.target_profile_id+':'+tmpObj.target_fbid,
+					'source': 'home',
+					'nctr[_mod]': 'pagelet_home_stream',
+					'lsd':	'',
+					'post_form_id_source':'AsyncRequest',
+					'lazy': 1,
+					'stale_ok': 1
+				};
+				
+				var postData = FGS.jQuery.param(postData).replace(/%5B/g,'[').replace(/%5D/g,']');
+				
+				var obj = {
+					arguments:
+					{
+						'type': 'POST',
+						'url': 'https://www.facebook.com/ajax/feed/filter_action.php?__a=1',
+						'data': postData
+					},
+					params: []
+				};
+				
+				FGSoperator.postMessage(obj);
+			}
+		}
+	});
+};
+
+FGS.commentBonus = function(bonusID, comment)
+{
+	FGS.database.query({query: FGS.squel.select().from('bonuses').where('id', bonusID), callback: function(res) {
+			if(res.result.length > 0) {
+				var v = res.result[0];
+					
+				var postData = { 
+					'charset_test': FGS.charset_test,
+					'post_form_id': FGS.post_form_id,
+					'fb_dtsg':	FGS.fb_dtsg,
+					'xhp_ufi': 1,
+					'comment': 'Add comment',
+					'feedback_params': v.feedback,
+					'add_comment_text': comment,
+					'link_data': v.link_data,
+					'nctr[_mod]': 'pagelet_home_stream',
+					'lsd':	'',
+					'post_form_id_source':'AsyncRequest',
+					'lazy': 1,
+					'stale_ok': 1,
+					"__user": FGS.userID
+				};
+
+				var postData = FGS.jQuery.param(postData).replace(/%5B/g,'[').replace(/%5D/g,']');
+				
+				var obj = {
+					arguments:
+					{
+						'type': 'POST',
+						'url': 'https://www.facebook.com/ajax/ufi/modify.php?__a=1',
+						'data': postData
+					},
+					params: [bonusID, 'comment'],
+					callback: 'FGS.commentOrLikeBonus_callback'
+				};
+				
+				FGSoperator.postMessage(obj);
+			}
+		}
+	});
+};
+
+FGS.likeBonus = function (bonusID, autolike)
+{
+	FGS.database.query({query: FGS.squel.select().from('bonuses').where('id', bonusID), callback: function(res) {
+			if(res.result.length > 0) {
+				var v = res.result[0];
+				
+				if(typeof(autolike) != 'undefined')
+				{
+					if(!FGS.options.games[v.gameID].likeBonus)
+					{	
+						return;
+					}
+				}
+				
+				var postData = {
+					'charset_test': FGS.charset_test,
+					'post_form_id': FGS.post_form_id,
+					'fb_dtsg':	FGS.fb_dtsg,
+					'xhp_ufi': 1,
+					'like': '',
+					'feedback_params': v.feedback,
+					'add_comment_text': '',
+					'link_data': v.link_data,
+					'nctr[_mod]': 'pagelet_home_stream',
+					'lsd':	'',
+					'post_form_id_source':'AsyncRequest',
+					'lazy': 1,
+					'stale_ok': 1,
+					"__user": FGS.userID
+				};
+				
+				var postData = FGS.jQuery.param(postData).replace(/%5B/g,'[').replace(/%5D/g,']');
+				
+				var obj = {
+					arguments:
+					{
+						'type': 'POST',
+						'url': 'https://www.facebook.com/ajax/ufi/modify.php?__a=1',
+						'data': postData
+					},
+					params: [bonusID, 'like'],
+					callback: 'FGS.commentOrLikeBonus_callback'
+				};
+				
+				FGSoperator.postMessage(obj);
+			}
+		}
+	});
+};
+
+FGS.sendbackGift = function (bonusID, sendbackData)
+{
+	FGS.database.query({query: FGS.squel.select().from('bonuses').where('id', bonusID), callback: function(res) {
+			if(res.result.length > 0) {
+				var v = res.result[0];
+					
+				if(!FGS.options.games[v.gameID].sendbackGift)
+				{	
+					return;
+				}
+				var gameID = v.gameID;	
+				
+				FGS.sendView('changeSendbackState', bonusID);
+				
+				var tempData = sendbackData;
+				
+				if(typeof tempData.destInt == 'undefined' || tempData.destInt == '')
+				{
+					var postData = v.post;
+					tempData.destInt = FGS.Gup('params\\\[from_id\\\]', postData);
+				}
+				
+				var params = {
+					gift: tempData.gift,
+					gameID:	gameID,
+					sendTo: [tempData.destInt],
+					sendToName: tempData.destName,
+					thankYou: true,
+					bonusID: bonusID,	
+					isRequest: true
+				};
+				
+				var game = FGS.gamesData[gameID].systemName;
+				
+				FGS[game].Freegifts.Click(params);			
+			}
+		}
+	});
 };
